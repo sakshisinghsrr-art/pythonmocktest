@@ -1,88 +1,92 @@
 import streamlit as st
 import time
+import pandas as pd
 
-st.set_page_config(page_title="ICAI Mock Test System", layout="wide")
+st.set_page_config(page_title="ICAI CBT System", layout="wide")
 
-st.title("📚 ICAI Advanced ITT Mock Test (Unit 1 + 2 + 3)")
+st.title("📚 ICAI Advanced ITT Exam Dashboard")
 
 TOTAL_QUESTIONS = 20
 EXAM_TIME = 60 * 60  # 60 minutes
 
-# ---------------- UNIT SELECTION ---------------- #
+# ---------------- SIDEBAR ---------------- #
 
-unit = st.selectbox(
-    "Select Unit",
-    ["Unit 1: Power BI", "Unit 2: Python", "Unit 3: KNIME"]
+st.sidebar.title("📌 Select Exam Unit")
+
+unit = st.sidebar.radio(
+    "Choose Module",
+    ["📊 Unit 1: Power BI", "🐍 Unit 2: Python", "🔷 Unit 3: KNIME"]
 )
 
-# ---------------- UNIT 1: POWER BI ---------------- #
+st.sidebar.markdown("---")
+st.sidebar.info("🧠 Select unit to start exam")
 
-powerbi_questions = [
+# ---------------- QUESTION BANK ---------------- #
+
+powerbi = [
 {
 "q":"What is Power BI used for?",
-"options":["Gaming","Data visualization","Video editing","Emailing"],
+"options":["Gaming","Data visualization","Typing","Email"],
 "ans":"B",
-"exp":"Power BI is a BI tool for visualization."
+"exp":"Power BI is used for data visualization."
 },
 {
 "q":"Power BI Desktop is used for?",
-"options":["Creating reports","Browsing","Gaming","Coding OS"],
+"options":["Reports creation","Browsing","Gaming","Music"],
 "ans":"A",
-"exp":"Used to create reports and dashboards."
+"exp":"Used for report creation."
 },
 ]
 
-# ---------------- UNIT 2: PYTHON ---------------- #
-
-python_questions = [
+python = [
 {
-"q":"What will be output?\nprint(2*3**2)",
-"options":["36","18","12","9"],
+"q":"Output of 2**3?",
+"options":["6","8","9","5"],
 "ans":"B",
-"exp":"3**2=9, 2*9=18"
+"exp":"2**3 = 8"
 },
 {
 "q":"Which is immutable?",
-"options":["List","Set","Tuple","Dict"],
-"ans":"C",
-"exp":"Tuple cannot be changed"
+"options":["List","Tuple","Set","Dict"],
+"ans":"B",
+"exp":"Tuple is immutable"
 },
 ]
 
-# ---------------- UNIT 3: KNIME ---------------- #
-
-knime_questions = [
+knime = [
 {
 "q":"KNIME is used for?",
-"options":["Video editing","Data analytics","Gaming","Typing"],
+"options":["Gaming","Data analytics","Music","Typing"],
 "ans":"B",
-"exp":"KNIME is a data analytics platform"
+"exp":"KNIME is a data analytics tool"
 },
 {
-"q":"What are KNIME nodes?",
-"options":["Files","Processing blocks","Images","Reports"],
+"q":"What are nodes in KNIME?",
+"options":["Files","Processing blocks","Images","Tables"],
 "ans":"B",
-"exp":"Nodes perform data operations"
+"exp":"Nodes perform operations"
 },
 ]
 
-# ---------------- SELECT UNIT ---------------- #
+# ---------------- UNIT SELECT ---------------- #
 
-if unit == "Unit 1: Power BI":
-    base_questions = powerbi_questions
-elif unit == "Unit 2: Python":
-    base_questions = python_questions
+if "Unit 1" in unit:
+    base_questions = powerbi
+elif "Unit 2" in unit:
+    base_questions = python
 else:
-    base_questions = knime_questions
+    base_questions = knime
 
-# expand to 20 questions
 questions = []
 for i in range(TOTAL_QUESTIONS):
     questions.append(base_questions[i % len(base_questions)].copy())
 
-# ---------------- RESET FUNCTION ---------------- #
+# ---------------- SESSION ---------------- #
 
-def reset_exam():
+if "started" not in st.session_state:
+    st.session_state.started = False
+
+def reset():
     st.session_state.index = 0
     st.session_state.answers = [None]*TOTAL_QUESTIONS
     st.session_state.start_time = time.time()
@@ -91,12 +95,9 @@ def reset_exam():
 
 # ---------------- START ---------------- #
 
-if "started" not in st.session_state:
-    st.session_state.started = False
-
 if not st.session_state.started:
-    if st.button("🚀 Start ICAI Exam"):
-        reset_exam()
+    if st.button("🚀 Start Exam"):
+        reset()
 
 # ---------------- EXAM SCREEN ---------------- #
 
@@ -116,7 +117,7 @@ if st.session_state.started and not st.session_state.submitted:
     i = st.session_state.index
     q = questions[i]
 
-    st.markdown(f"### Question {i+1} of {TOTAL_QUESTIONS}")
+    st.markdown(f"### Question {i+1} / {TOTAL_QUESTIONS}")
     st.info(q["q"])
 
     choice = st.radio(
@@ -131,7 +132,7 @@ if st.session_state.started and not st.session_state.submitted:
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        if st.button("⬅️ Previous") and i > 0:
+        if st.button("⬅️ Prev") and i > 0:
             st.session_state.index -= 1
 
     with col2:
@@ -139,15 +140,15 @@ if st.session_state.started and not st.session_state.submitted:
             st.session_state.index += 1
 
     with col3:
-        if st.button("🚨 Submit Exam"):
+        if st.button("🚨 Submit"):
             st.session_state.submitted = True
 
     st.markdown("---")
 
-    if st.button("🔄 Reset Exam"):
-        reset_exam()
+    if st.button("🔄 Reset"):
+        reset()
 
-# ---------------- RESULT ---------------- #
+# ---------------- RESULT DASHBOARD ---------------- #
 
 if st.session_state.started and st.session_state.submitted:
 
@@ -157,22 +158,37 @@ if st.session_state.started and st.session_state.submitted:
         if st.session_state.answers[i] == q["ans"]:
             score += 1
 
-    st.success(f"🎉 {unit} Completed!")
-
     accuracy = (score / TOTAL_QUESTIONS) * 100
 
-    if accuracy == 100:
-        st.success("🏆 Outstanding Performance!")
-    elif accuracy >= 70:
-        st.info("👍 Good Knowledge")
-    else:
-        st.warning("📚 Needs Improvement")
+    st.success(f"🎉 {unit} Completed!")
 
-    st.markdown(f"### 🎯 Score: {score}/{TOTAL_QUESTIONS}")
-    st.markdown(f"### 📊 Accuracy: {accuracy:.2f}%")
+    # ---------------- BEAUTIFUL STATS ---------------- #
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("📊 Score", f"{score}/{TOTAL_QUESTIONS}")
+    col2.metric("🎯 Accuracy", f"{accuracy:.2f}%")
+    col3.metric("🧠 Status",
+                "Excellent 🏆" if accuracy == 100 else
+                "Good 👍" if accuracy >= 70 else
+                "Needs Improvement 📚")
 
     st.markdown("---")
-    st.markdown("## 📖 Review Answers")
+
+    # ---------------- GRAPH ---------------- #
+
+    chart_data = pd.DataFrame({
+        "Performance": ["Correct", "Wrong"],
+        "Count": [score, TOTAL_QUESTIONS - score]
+    })
+
+    st.bar_chart(chart_data.set_index("Performance"))
+
+    st.markdown("---")
+
+    # ---------------- REVIEW ---------------- #
+
+    st.markdown("## 📖 Answer Review")
 
     for i, q in enumerate(questions):
 
@@ -183,12 +199,12 @@ if st.session_state.started and st.session_state.submitted:
         correct = q["ans"]
 
         if user == correct:
-            st.success(f"✔ Correct ({user})")
+            st.success(f"✔ Correct Answer: {user}")
         else:
-            st.error(f"❌ Your: {user} | Correct: {correct}")
+            st.error(f"❌ Your Answer: {user} | Correct: {correct}")
 
         st.info(q["exp"])
         st.markdown("---")
 
     if st.button("🔄 Restart Exam"):
-        reset_exam()
+        reset()
